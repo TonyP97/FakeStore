@@ -1,0 +1,12 @@
+.productInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.productImage {
+    max-width: 250px;
+    max-height: 250px;
+
+}

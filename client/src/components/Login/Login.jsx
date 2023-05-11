@@ -54,8 +54,11 @@ const Login = () => {
       .then(() => {
         axios.get(`/users/${userID}`)
         .then((response) => {
-          dispatch(setCarrito(response.data.carrito.products));
-        })
+          if (response.data.carritos.length === 0) {
+          dispatch(setCarrito([]));
+        } else {
+          dispatch(setCarrito(response.data.carritos[0].products));
+        }})
         .catch((error) => {
           console.log(error);
         })

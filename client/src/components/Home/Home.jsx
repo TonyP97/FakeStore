@@ -22,6 +22,7 @@ const Home = () => {
   const [showCart, setShowCart] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
+  // deberia utilizar los estados de productos y de usuarios aqui y en login y profile y todo lo q sea necesario
 
   useEffect(() => {
 
@@ -29,7 +30,7 @@ const Home = () => {
       axios.get(`/users/${userIDls}`)
       .then((response) => {
         setUserData(response.data);
-        dispatch(setCarrito(response.data.carrito.products));
+        dispatch(setCarrito(response.data.carritos[0].products));
       })
       .catch((error) => {
         console.log(error);

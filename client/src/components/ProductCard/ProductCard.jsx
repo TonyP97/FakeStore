@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { setCarrito } from '../../features/carrito/carritoSlice';
 import addCartIcon from '../../assets/addCart.svg';
@@ -15,6 +15,7 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
   const tokenls = localStorage.getItem('token');
   // const login = useSelector(state => state.login.userID);
   const carrito = useSelector(state => state.carrito.carrito);
+  const [cantidad, setCantidad] = useState(1);
 
   useEffect(() => {
     if (tokenls) {
@@ -22,12 +23,14 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
     }
   }, [tokenls])
 
-  const addToCart = async (userId, productId) => {
+  const addToCart = async (userId, productId, quantity) => {
     try {
+      const quantity = cantidad;
       const userId = userIDls;
       const productId = product.id;
-      const response = await axios.post('/carritos', { userId, productId });
+      const response = await axios.post('/carritos', { userId, productId, quantity });
       const carrito = response.data;
+      dispatch(setCarrito(carrito));
       return carrito;
     } catch (error) {
       console.error(error);
@@ -42,15 +45,13 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
         <img src={image} alt="Imagen de producto" className='h-60 w-60'/>
         <h2 className='w-60 font-serif font-bold underline'> {title}</h2>
       </Link>
-      
-        {/* {description && <p className=''>{description}</p>}
-        {category && <h2>{category}</h2>} */}
         <div className='w-60'>
           <div className='flex space-x-5 justify-between'>
             <p className='font-bold'>{price}</p>
             {isLogged && 
             <div>
-              <button title='Agregar al Carrito' onClick={() => addToCart(product)} >
+              <input type="number" name="quantity" value={cantidad} min="1" onChange={(e) => setCantidad(e.target.value)} />
+              <button title='Agregar al Carrito' onClick={() => addToCart()} >
                 <img src={addCartIcon} alt="Agregar al Carrito" className=''/>
               </button>
             </div>

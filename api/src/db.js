@@ -49,7 +49,7 @@ const { User, Product, Carrito, Carrito_product } = sequelize.models;
 // Product.belongsToMany(Carrito, { through: 'carrito_product' });
 
 Carrito.belongsTo(User);
-User.hasOne(Carrito);
+User.hasMany(Carrito);
 
 Carrito.belongsToMany(Product, { through: Carrito_product });
 Product.belongsToMany(Carrito, { through: Carrito_product });

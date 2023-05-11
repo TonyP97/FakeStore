@@ -5,7 +5,7 @@ const carritoSlice = createSlice({
   initialState: {
     carrito: [],
     usuario: null,
-    carroActualizado: []
+    carrosFinalizados: []
   },
   reducers: {
     setCarrito(state, action) {
@@ -14,8 +14,8 @@ const carritoSlice = createSlice({
     setUsuario(state, action) {
         state.usuario = action.payload;
     },
-    setCarroActualizado(state, action) {
-        state.carroActualizado = action.payload;
+    setCarrosFinalizados(state, action) {
+        state.carrosFinalizados = action.payload;
     }
   },
 });
@@ -23,7 +23,7 @@ const carritoSlice = createSlice({
 export const {
     setCarrito,
     setUsuario,
-    setCarroActualizado
+    setCarrosFinalizados
 } = carritoSlice.actions;
 
 export default carritoSlice.reducer;

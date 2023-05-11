@@ -228,6 +228,14 @@ router.delete('/carritos/:userId/:productId', async (req, res) => {
     if (carrito) {
       // Si el carrito existe, eliminamos el producto del carrito
       await carrito.removeProduct(productId);
+      // Recuperamos todos los productos en el carrito y calculamos el nuevo precio total
+      let productosEnCarrito = await carrito.getProducts();
+          let nuevoPrecioTotal = 0;
+          productosEnCarrito.forEach(productoEnCarrito => {
+            nuevoPrecioTotal += productoEnCarrito.carrito_product.price;
+          });
+          carrito.price = nuevoPrecioTotal;
+          await carrito.save();
       // Recuperamos el carrito actualizado para enviarlo como respuesta
       const updatedCarrito = await Carrito.findOne({
         where: { id: carrito.id },

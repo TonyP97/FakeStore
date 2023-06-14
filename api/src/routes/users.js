@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const { Product, User, Carrito, Carrito_product } = require('../db.js');
 
 
@@ -10,7 +11,6 @@ const getApiInfo = async () => {
     let api = await axios.get('https://fakestoreapi.com/users');
     api = await api.data.map((e) => {
         const user = {
-            // id: e.id,
             email: e.email,
             username: e.username,
             password: e.password,
@@ -33,7 +33,20 @@ const usersToDb = async () => {
     const users = await User.findAll();
     if (!users.length) {
       const apiInfo = await getApiInfo();
-        await User.bulkCreate(apiInfo);
+
+      const usersWithHashedPasswords = await Promise.all(apiInfo.map(async (e) => {
+        const hashedPassword = await bcrypt.hash(e.password, 10);
+        return {
+          email: e.email,
+          username: e.username,
+          password: hashedPassword,
+          firstname: e.firstname,
+          lastname: e.lastname,
+          address: e.address,
+          phone: e.phone,
+        };
+      }));
+        await User.bulkCreate(usersWithHashedPasswords);
         console.log('Usuarios cargados en la base de datos');
     } else {
       console.log('Los usuarios ya se encuentran cargados en la base de datos');
@@ -43,8 +56,36 @@ const usersToDb = async () => {
   }
 }
 
-const loadUsers = async () => { await usersToDb() }
+
+//ADMIN
+const initializateAdmin = async () => {
+  try {
+    // Crear usuario administrador si no existe
+    const adminUser = await User.findOne({ where: { email: 'admin@fakestore.com' } });
+    if (!adminUser) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const newAdminUser = await User.create({
+        email: 'admin@fakestore.com',
+        username: 'admin',
+        password: hashedPassword,
+        firstname: 'Admin',
+        lastname: 'User',
+        address: '123 Admin Street',
+        phone: '123456789',
+        isAdmin: true,
+      });
+      console.log('Usuario administrador creado:', newAdminUser);
+    } else {
+      console.log('El usuario administrador ya existe en la base de datos');
+    }
+  }
+  catch (error) {
+    console.log(error);
+  }
+}
+const loadUsers = async () => { await usersToDb(), await initializateAdmin() }
 // loadUsers();
+
 
 
 // Configura las rutas de tu servidor  
@@ -101,14 +142,51 @@ router.post('/users', async (req, res) => {
 
 
 
+// router.post('/login', async (req, res) => {
+//   const { username, password } = req.body;
+//   const user = await User.findOne({ where: { username: username } });
+//   if (user && user.password === password) {
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       res.status(401).json({ error: 'Credenciales incorrectas' });
+//     } else {
+//     const token = jwt.sign({ userId: user.id, admin: user.isAdmin }, process.env.SECRET_KEY);
+//     res.json({ token });
+//     }
+//   } else {
+//     res.status(401).json({ error: 'Credenciales incorrectas' });
+//   }
+// });
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ where: { username: username } });
-  if (user && user.password === password) {
-    const token = jwt.sign({ userId: user.id }, process.env.SECRET_KEY);
-    res.json({ token });
+  if (user) {
+      const token = jwt.sign({ userId: user.id, admin: user.isAdmin }, process.env.SECRET_KEY);
+      res.json({ token });
   } else {
     res.status(401).json({ error: 'Credenciales incorrectas' });
+  }
+});
+
+router.patch('/admin/edit/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, price, image, description, category } = req.body;
+    const product = await Product.findByPk(id);
+    if (product) {
+      await product.update({
+        title,
+        price,
+        image,
+        description,
+        category,
+      });
+      res.status(200).send(product);
+    } else {
+      res.status(404).send('Producto no encontrado');
+    }
+  } catch (error) {
+    console.error(error.message);
   }
 });
 

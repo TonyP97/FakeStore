@@ -35,3 +35,5 @@ export const {
     setUsuariosPorCategoria,
     setUsuariosPorCategoriaFiltrados
 } = usuariosSlice.actions;
+
+export default usuariosSlice.reducer;

@@ -40,11 +40,11 @@ const Profile = () => {
                 <p>Email: {userData.email}</p>
                 <p>Dirección: {userData.address.street} {userData.address.number}, {userData.address.city}</p>
                 <p>Teléfono: {userData.phone}</p>
-                {carrito.length === 0 ?
+                {!Array.isArray(carrito?.products) || carrito.products.length === 0 ?
                     <p>No hay productos en el carrito</p>
                     :
                     
-                    carrito.map((producto) => {
+                    carrito.products.map((producto) => {
                         return (
                           <ul>
                             <li>

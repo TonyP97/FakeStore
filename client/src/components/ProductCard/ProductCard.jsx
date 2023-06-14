@@ -2,7 +2,6 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-// import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { setCarrito } from '../../features/carrito/carritoSlice';
 import addCartIcon from '../../assets/addCart.svg';
@@ -11,9 +10,10 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
    
   const dispatch = useDispatch();
   const [isLogged, setIsLogged] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const userIDls = localStorage.getItem('userID');
   const tokenls = localStorage.getItem('token');
-  // const login = useSelector(state => state.login.userID);
+  const adminls = localStorage.getItem('admin');
   const carrito = useSelector(state => state.carrito.carrito);
   const [cantidad, setCantidad] = useState(1);
 
@@ -21,20 +21,26 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
     if (tokenls) {
       setIsLogged(true);
     }
-  }, [tokenls])
+    if (tokenls === null) {
+      setIsLogged(false);
+    }
+    if (adminls === 'true') {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [tokenls, adminls])
 
-  const addToCart = async (userId, productId, quantity) => {
+  const addToCart = async () => {
     try {
       const quantity = cantidad;
       const userId = userIDls;
       const productId = product.id;
       const response = await axios.post('/carritos', { userId, productId, quantity });
-      const carrito = response.data;
-      dispatch(setCarrito(carrito));
-      return carrito;
+      const updatedCarrito = response.data;
+      dispatch(setCarrito(updatedCarrito));
     } catch (error) {
       console.error(error);
-      return null;
     }
   }
 
@@ -48,14 +54,22 @@ const ProductCard = ({id, title, price, image, description, category, product}) 
         <div className='w-60'>
           <div className='flex space-x-5 justify-between'>
             <p className='font-bold'>{price}</p>
-            {isLogged && 
-            <div>
-              <input type="number" name="quantity" value={cantidad} min="1" onChange={(e) => setCantidad(e.target.value)} />
-              <button title='Agregar al Carrito' onClick={() => addToCart()} >
-                <img src={addCartIcon} alt="Agregar al Carrito" className=''/>
-              </button>
-            </div>
-            }
+            {isLogged && (
+              isAdmin ? (
+                <Link to={`/admin/edit/${id}`}>
+                  <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
+                    Editar
+                  </button>
+                </Link>
+              ) : (
+                <div>
+                  <input type="number" name="quantity" value={cantidad} min="1" onChange={(e) => setCantidad(e.target.value)} />
+                  <button title='Agregar al Carrito' onClick={() => addToCart()}>
+                    <img src={addCartIcon} alt="Agregar al Carrito" className=''/>
+                  </button>
+                </div>
+              )
+            )}
           </div>
         </div>
     </div>

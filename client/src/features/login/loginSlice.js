@@ -5,6 +5,7 @@ const loginSlice = createSlice({
   initialState: {
     token: null,
     userID: null,
+    admin: null
   },
   reducers: {
     setToken: (state, action) => {
@@ -12,13 +13,17 @@ const loginSlice = createSlice({
     },
     setUserID: (state, action) => {
       state.userID = action.payload;
+    },
+    setAdmin: (state, action) => {
+      state.admin = action.payload;
     }
   },
 });
 
 export const {
   setToken,
-  setUserID
+  setUserID,
+  setAdmin
 } = loginSlice.actions;
 
 export default loginSlice.reducer;

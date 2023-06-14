@@ -24,16 +24,17 @@ router.get('/carritos/:userId', async (req, res) => {
       where: {
         finalizado: false
       },
-      include: {
-        model: Product,
-      },
-      include: {
-        model: User({
+      include: [
+        {
+          model: Product
+        },
+        {
+          model: User,
           where: {
             id: userId
           }
-        })
-      }
+        }
+      ]
     });
     res.status(200).json(carrito);
   } catch (error) {
@@ -78,7 +79,7 @@ router.post('/carritos', async (req, res) => {
     const precioProducto = producto.price * quantity;
     if (productoEnCarrito) {
       // Si el producto ya está en el carrito, actualizamos su cantidad y precio
-      const nuevaCantidad = productoEnCarrito.quantity + quantity;
+      const nuevaCantidad = Number(productoEnCarrito.quantity) + Number(quantity);
       const nuevoPrecio = productoEnCarrito.price + precioProducto;
       // Recargamos el carrito para actualizar los productos y el precio total
       await carrito.reload();
@@ -86,6 +87,7 @@ router.post('/carritos', async (req, res) => {
         through: {
           quantity: nuevaCantidad,
           price: nuevoPrecio,
+          order: productoEnCarrito.order,
         }
       });
       let productosEnCarrito = await carrito.getProducts();
@@ -97,15 +99,19 @@ router.post('/carritos', async (req, res) => {
       await carrito.save();
     } else {
       // Si el producto no está en el carrito, lo agregamos
+      const productosEnCarrito = await carrito.getProducts();
+      // const nuevoOrder = productosEnCarrito.length + 1;
+      const nuevoOrder = productosEnCarrito.length > 0 ? productosEnCarrito.length + 1 : 1; // Si hay productos en el carrito, asignamos el siguiente order, de lo contrario, asignamos 1
       await carrito.addProduct(producto, {
         through: {
           quantity: quantity,
           price: precioProducto,
+          order: nuevoOrder,
         }
       });
       // Recargamos el carrito para actualizar los productos y el precio total
     await carrito.reload();
-    let productosEnCarrito = await carrito.getProducts();
+    // let productosEnCarrito = await carrito.getProducts();
     let nuevoPrecioTotal = 0;
     productosEnCarrito.forEach(productoEnCarrito => {
       nuevoPrecioTotal += productoEnCarrito.carrito_product.price;
@@ -151,7 +157,7 @@ router.patch('/carritos/:userId/:productId', async (req, res) => {
       });
       if (productoEnCarrito) {
         // Si el producto existe en el carrito, actualizamos la cantidad y el precio
-        const nuevaCantidad = productoEnCarrito.quantity + quantity;
+        const nuevaCantidad = quantity;
         if (nuevaCantidad > 0) {
           const nuevoPrecio = producto.price * nuevaCantidad;
           await carrito.addProduct(producto, {

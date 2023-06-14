@@ -38,3 +38,4 @@ export const {
     setCategoriasFiltradas
 } = productosSlice.actions;
 
+export default productosSlice.reducer;

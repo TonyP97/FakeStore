@@ -1,10 +1,12 @@
 import React from 'react'
 import ProductCard from '../ProductCard/ProductCard';
 import Carrito from '../Carrito/Carrito';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux'
-import { setToken, setUserID } from '../../features/login/loginSlice'
+import { setAdmin, setToken, setUserID } from '../../features/login/loginSlice'
 import { setCarrito } from '../../features/carrito/carritoSlice';
+import { setProductos } from '../../features/productos/productosSlice';
+import { setUsuarios } from '../../features/usuarios/usuariosSlice';
 
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -12,25 +14,27 @@ import axios from 'axios';
 const Home = () => {
   
   const dispatch = useDispatch();
-  // const login = useSelector(state => state.login);
   const userIDls = localStorage.getItem('userID');
   const tokenls = localStorage.getItem('token');
+  const adminls = localStorage.getItem('admin');
   const carrito = useSelector(state => state.carrito.carrito);
+  const productos = useSelector(state => state.productos.productos);
+  const usuarios = useSelector(state => state.usuarios.usuarios);
+  const [carritoLoaded, setCarritoLoaded] = useState(false);
   const [userData, setUserData] = useState({});
   const [isLogged, setIsLogged] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   // deberia utilizar los estados de productos y de usuarios aqui y en login y profile y todo lo q sea necesario
 
+  
   useEffect(() => {
-
     if (tokenls && userIDls) {
       axios.get(`/users/${userIDls}`)
       .then((response) => {
         setUserData(response.data);
-        dispatch(setCarrito(response.data.carritos[0].products));
       })
       .catch((error) => {
         console.log(error);
@@ -41,25 +45,45 @@ const Home = () => {
       setIsLogged(true);
     }
 
+    if (adminls === 'true') {
+      setIsAdmin(true);
+    }
+
+  }, [])
+
+  useEffect(() => {
     axios.get('/products')
       .then((response) => {
         setTimeout(() => {
-          setProducts(response.data);
+          dispatch(setProductos(response.data));
         }, 1000);
       })
       .catch((error) => {
         console.log(error);
       })
 
-  }, [carrito])
+      axios.get('/users')
+      .then((response) => {
+        setTimeout(() => {
+          dispatch(setUsuarios(response.data));
+        }, 1000);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('token'); // Elimina el token del localStorage
     localStorage.removeItem('userID');
+    localStorage.removeItem('admin');
     setIsLogged(false); // Cambia el estado de isLogged a false
+    setIsAdmin(false);
     dispatch(setToken(null)); // Actualiza el estado del token en la aplicación
     dispatch(setUserID(null));
-    dispatch(setCarrito([])); // Actualiza el estado del carrito en la aplicación
+    dispatch(setAdmin(false))
+    // dispatch(setCarrito([])); // Actualiza el estado del carrito en la aplicación
+    setShowCart(false);
   };
 
   
@@ -89,22 +113,32 @@ const Home = () => {
         <h1 className='text-3xl font-mono font-medium uppercase mb-8 p-2.5 shadow-xl shadow-yellow-300 rounded-2xl border-4 border-yellow-300 border-double animate-[bounce_0.2s] cursor-pointer'>Fake.Store</h1>
         </a>
         <div>
-          <h1 className='text-center font-semibold my-5 text-2xl'>Explore nuestros productos</h1>
+          {
+            isAdmin === true ?
+            <h1 className='text-center font-semibold my-5 text-2xl'>Bienvenido Admin</h1>
+            :
+            <h1 className='text-center font-semibold my-5 text-2xl'>Explore nuestros productos</h1>
+          }
           <div>   
-              {carrito.length > 0 && 
+              {isAdmin === true ?
+              <div>
+                <Link to="/admin"><button>PANEL ADMIN</button></Link>
+              </div>
+              :
               <div>
                 <button onClick={() => setShowCart(!showCart)}>
                   CARRO
                 </button>
-                {showCart && <Carrito />}
+                {showCart && <Carrito showCart={showCart} />}
               </div>
               }
+              
           </div>
           {/* <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 sm:gap-20 lg:gap-40 xl:gap-40 mx-10'> */}
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 sm:gap-20 lg:gap-40 xl:gap-40 mx-10'>
-          {products.length === 0 ? 
+          {!productos || productos.length === 0 ? 
             <p>Cargando...</p >
-          : products.map((product) => {
+          : productos.map((product) => {
             return (
               <div className=' rounded-xl w-fit min-h-300'>
                 <ProductCard 
